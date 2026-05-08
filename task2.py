@@ -1,84 +1,66 @@
-import matplotlib.pyplot as plt
-import numpy as np
+import turtle
 
 
-def koch_curve(p1: np.ndarray, p2: np.ndarray, level: int) -> list[np.ndarray]:
+def koch_curve(t: turtle.Turtle, order: int, size: float) -> None:
     """
-    Recursively generates points of a Koch curve between two points p1 and p2.
-    Returns a list of points forming the curve.
+    Recursively draws one segment of the Koch curve.
+
+    Args:
+        t: Turtle object used for drawing.
+        order: Recursion depth. Higher value = more spikes.
+        size: Length of the current segment.
     """
-    if level == 0:
-        return [p1, p2]
-
-    # Divide segment into three equal parts
-    a = p1 + (p2 - p1) / 3
-    b = p1 + 2 * (p2 - p1) / 3
-
-    # Calculate the apex of the equilateral triangle
-    angle = np.pi / 3  # 60 degrees
-    direction = b - a
-    rotation = np.array([
-        [np.cos(angle), -np.sin(angle)],
-        [np.sin(angle),  np.cos(angle)],
-    ])
-    apex = a + rotation @ direction
-
-    # Recurse on each of the 4 new segments
-    points = []
-    for seg_start, seg_end in [(p1, a), (a, apex), (apex, b), (b, p2)]:
-        segment_points = koch_curve(seg_start, seg_end, level - 1)
-        # Avoid duplicating junction points
-        points.extend(segment_points[:-1])
-
-    points.append(p2)
-    return points
+    if order == 0:
+        t.forward(size)
+    else:
+        for angle in [60, -120, 60, 0]:
+            koch_curve(t, order - 1, size / 3)
+            t.left(angle)
 
 
-def koch_snowflake(level: int) -> tuple[list, list]:
+def draw_koch_snowflake(order: int, size: float = 300) -> None:
     """
-    Generates the full Koch snowflake (3 Koch curves forming a triangle).
-    Returns (x_coords, y_coords).
+    Draws a full Koch snowflake consisting of 3 Koch curves.
+
+    Args:
+        order: Recursion depth.
+        size: Side length of the initial equilateral triangle.
     """
-    # Equilateral triangle vertices
-    size = 1.0
-    p1 = np.array([0.0, 0.0])
-    p2 = np.array([size, 0.0])
-    p3 = np.array([size / 2, size * np.sqrt(3) / 2])
+    window = turtle.Screen()
+    window.title(f"Koch Snowflake — level {order}")
+    window.bgcolor("white")
 
-    all_points = []
-    for seg_start, seg_end in [(p1, p2), (p2, p3), (p3, p1)]:
-        segment_points = koch_curve(seg_start, seg_end, level)
-        all_points.extend(segment_points[:-1])
+    t = turtle.Turtle()
+    t.speed(0)
+    t.hideturtle()
+    t.pencolor("royalblue")
+    t.pensize(1)
 
-    # Close the snowflake
-    all_points.append(all_points[0])
+    # Position the turtle so the snowflake is centered
+    t.penup()
+    t.goto(-size / 2, -size * (3 ** 0.5) / 6)
+    t.pendown()
 
-    x = [pt[0] for pt in all_points]
-    y = [pt[1] for pt in all_points]
-    return x, y
+    # Draw 3 sides of the snowflake
+    for _ in range(3):
+        koch_curve(t, order, size)
+        t.right(120)
+
+    window.mainloop()
 
 
-def main():
+def main() -> None:
     try:
-        level = int(input("Enter recursion level (0–7 recommended): "))
-        if level < 0:
+        order = int(input("Enter recursion level (0–6 recommended): "))
+        if order < 0:
             print("Level must be a non-negative integer.")
             return
     except ValueError:
         print("Invalid input. Please enter an integer.")
         return
 
-    x, y = koch_snowflake(level)
-
-    _, ax = plt.subplots(figsize=(8, 7))
-    ax.plot(x, y, color="royalblue", linewidth=0.8)
-    ax.set_aspect("equal")
-    ax.axis("off")
-    ax.set_title(f"Koch Snowflake — level {level}", fontsize=14)
-    plt.tight_layout()
-    plt.show()
+    draw_koch_snowflake(order)
 
 
 if __name__ == "__main__":
     main()
-
